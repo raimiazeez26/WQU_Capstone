@@ -119,13 +119,11 @@ def layout():
 
                         # tabs
                         dbc.Row([
-
-                            # div for signal plot
-                            html.Div(id='signal-plot'),
-                            # dcc.Store inside the user's current browser session
-                            # dcc.Store(id='train_store', data=[], storage_type='session'),
-                            # # 'local' or 'session' or 'memory'
-                            # dcc.Store(id='test_store', data=[], storage_type='session'),
+                            dls.Dot(
+                                # div for signal plot
+                                html.Div(id='signal-plot'),
+                                color="#0f62fe",  # Customize color of the spinner
+                            )
                         ]),
 
                     ])

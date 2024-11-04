@@ -1,4 +1,3 @@
-
 import yfinance as yf
 import pandas as pd
 import numpy as np
@@ -6,7 +5,6 @@ import numpy as np
 from ta.trend import EMAIndicator, ADXIndicator, MACD
 from ta.momentum import RSIIndicator
 from ta.volatility import BollingerBands
-
 
 import plotly
 import plotly.graph_objects as go
@@ -16,6 +14,11 @@ import warnings
 
 # Suppress warnings
 warnings.filterwarnings("ignore")
+
+import quantstats_lumi as qs
+
+# Initialize QuantStats
+qs.extend_pandas()
 
 
 def fetch_data(ticker):
@@ -186,8 +189,8 @@ def plot_subplots(data, signal_col, ticker):
 
     # Customize axes appearance
     fig.update_xaxes(showgrid=False, showspikes=True, rangebreaks=[
-            dict(bounds=["sat", "mon"])  # Hide weekends
-        ])
+        dict(bounds=["sat", "mon"])  # Hide weekends
+    ])
 
     fig.update_yaxes(showgrid=False)
 
@@ -220,10 +223,14 @@ def apply_directional_filter(eurusd, vix, usdx, macro, sp):
     usdx['usdx_Signal'] = np.where(usdx['Close'].rolling(window=20).mean() < usdx['Close'], 'Bullish', 'Bearish')
 
     # Macroeconomic Conditions
-    macro['xli_Signal'] = np.where(macro['XLI_Close'].rolling(window=20).mean() > macro['XLI_Close'], 'Bullish', 'Bearish')
-    macro['tip_Signal'] = np.where(macro['TIP_Close'].rolling(window=20).mean() > macro['TIP_Close'], 'Bullish', 'Bearish')
-    macro['tlt_Signal'] = np.where(macro['TLT_Close'].rolling(window=20).mean() < macro['TLT_Close'], 'Bullish', 'Bearish')
-    macro['shy_Signal'] = np.where(macro['SHY_Close'].rolling(window=20).mean() < macro['SHY_Close'], 'Bullish', 'Bearish')
+    macro['xli_Signal'] = np.where(macro['XLI_Close'].rolling(window=20).mean() > macro['XLI_Close'], 'Bullish',
+                                   'Bearish')
+    macro['tip_Signal'] = np.where(macro['TIP_Close'].rolling(window=20).mean() > macro['TIP_Close'], 'Bullish',
+                                   'Bearish')
+    macro['tlt_Signal'] = np.where(macro['TLT_Close'].rolling(window=20).mean() < macro['TLT_Close'], 'Bullish',
+                                   'Bearish')
+    macro['shy_Signal'] = np.where(macro['SHY_Close'].rolling(window=20).mean() < macro['SHY_Close'], 'Bullish',
+                                   'Bearish')
 
     # Market Trend from SP500
     sp['pct_change'] = sp['Close'].pct_change()
@@ -244,23 +251,30 @@ def apply_directional_filter(eurusd, vix, usdx, macro, sp):
 
     # Signal 1: Combination of mean reversion + market trend only
     eurusd['Signal_1'] = np.where((eurusd['Signal'] == 'Buy') & (eurusd['Mkt_Trend'] == 'Bullish'), 'Buy', 'Hold')
-    eurusd['Signal_1'] = np.where((eurusd['Signal'] == 'Sell') & (eurusd['Mkt_Trend'] == 'Bearish'), 'Sell', eurusd['Signal_1'])
+    eurusd['Signal_1'] = np.where((eurusd['Signal'] == 'Sell') & (eurusd['Mkt_Trend'] == 'Bearish'), 'Sell',
+                                  eurusd['Signal_1'])
 
     # Signal 2: Combination of mean reversion + USDX only + VIX
-    eurusd['Signal_2'] = np.where((eurusd['Signal'] == 'Buy') & (eurusd['USDX_Signal'] == 'Bearish') & (eurusd['VIX_Signal'] == 'Trade'), 'Buy', 'Hold')
-    eurusd['Signal_2'] = np.where((eurusd['Signal'] == 'Sell') & (eurusd['USDX_Signal'] == 'Bullish') & (eurusd['VIX_Signal'] == 'Trade'), 'Sell', eurusd['Signal_2'])
+    eurusd['Signal_2'] = np.where(
+        (eurusd['Signal'] == 'Buy') & (eurusd['USDX_Signal'] == 'Bearish') & (eurusd['VIX_Signal'] == 'Trade'), 'Buy',
+        'Hold')
+    eurusd['Signal_2'] = np.where(
+        (eurusd['Signal'] == 'Sell') & (eurusd['USDX_Signal'] == 'Bullish') & (eurusd['VIX_Signal'] == 'Trade'), 'Sell',
+        eurusd['Signal_2'])
 
     # Signal 3: Combination of mean reversion + macro data
     eurusd['Signal_3'] = np.where(
         (eurusd['Signal'] == 'Buy') &
-        (eurusd[['XLI_Signal', 'TIP_Signal', 'TLT_Signal', 'SHY_Signal']] == ['Bullish', 'Bearish', 'Bullish', 'Bullish']).all(axis=1),
+        (eurusd[['XLI_Signal', 'TIP_Signal', 'TLT_Signal', 'SHY_Signal']] == ['Bullish', 'Bearish', 'Bullish',
+                                                                              'Bullish']).all(axis=1),
         'Buy',
         'Hold'
     )
 
     eurusd['Signal_3'] = np.where(
         (eurusd['Signal'] == 'Sell') &
-        (eurusd[['XLI_Signal', 'TIP_Signal', 'TLT_Signal', 'SHY_Signal']] == ['Bearish', 'Bullish', 'Bearish', 'Bearish']).all(axis=1),
+        (eurusd[['XLI_Signal', 'TIP_Signal', 'TLT_Signal', 'SHY_Signal']] == ['Bearish', 'Bullish', 'Bearish',
+                                                                              'Bearish']).all(axis=1),
         'Sell',
         eurusd['Signal_3']
     )
@@ -289,7 +303,6 @@ def apply_directional_filter(eurusd, vix, usdx, macro, sp):
     return eurusd
 
 
-
 # class Position contain data about trades opened/closed during the backtest
 class Position:
     def __init__(self, open_datetime, open_price, order_type):
@@ -312,7 +325,6 @@ class Position:
         elif self.order_type == 'Sell':
             self.returns = (self.open_price - self.close_price) / self.open_price
 
-
         self.status = 'closed'
 
     def _asdict(self):
@@ -332,11 +344,11 @@ class Strategy:
     def __init__(self, df, signal_col):
         self.positions = []
         self.data = df.copy()
-        self.data.reset_index(inplace=True) #
+        self.data.reset_index(inplace=True)  #
         self.data = self.data.rename(columns={'Date': 'date'})
         self.signal_col = signal_col
-        self.data[self.signal_col] = self.data[self.signal_col].shift(1) # shift signal one step for next day open
-        self.last_date = str(self.data.date.iloc[-1])
+        self.data[self.signal_col] = self.data[self.signal_col].shift(1)  # shift signal one step for next day open
+        self.last_date = str(self.data['date'].iloc[-1])
 
     # return backtest result
     def get_positions_df(self):
@@ -358,15 +370,15 @@ class Strategy:
 
                 # close Buy position if signal changes to Sell
                 if pos.order_type == 'Buy' and data[self.signal_col] == 'Sell':
-                  pos.close_position(data.date, data.Close)
+                    pos.close_position(data['date'], data.Close)
 
                 # close sell position if signal changes to Buy
                 elif pos.order_type == 'Sell' and data[self.signal_col] == 'Buy':
-                  pos.close_position(data.date, data.Close)
+                    pos.close_position(data['date'], data.Close)
 
                 # close any position on last backtest date
                 elif str(data['date']) == self.last_date:
-                    pos.close_position(data.date, data.Close)
+                    pos.close_position(data['date'], data.Close)
 
     # check for open positions
     def has_open_positions(self):
@@ -422,3 +434,24 @@ class Strategy:
             self.logic(data)
 
         return self.get_positions_df()
+
+#
+# price_daily, vix_daily, usdx_daily, macro_data, sp_daily = fetch_data('EURUSD')
+# data = add_indicators(price_daily)
+#
+# data_filters = apply_directional_filter(price_daily, vix_daily, usdx_daily, macro_data, sp_daily)
+#
+# # Run the strategy using EUR/USD data
+# strategy = Strategy(data_filters, 'Signal_1')
+# result = strategy.run()
+#
+# # Convert index to datetime
+# result = result.set_index('open_datetime')
+#
+# print(type(result.index[0]))
+# result.index = pd.to_datetime(result.index)
+#
+#
+# # generate report tearsheet with SPY BENCHMARK
+# qs.reports.html(result['cumulative_returns'], title=f'Strategy backtest',
+#                 download_filename=f'Strategy Backtest.html', output=f'Strategy Backtest.html')

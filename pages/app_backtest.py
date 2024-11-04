@@ -1,4 +1,5 @@
 import datetime, time
+import os
 import pandas as pd
 import numpy as np
 import dash
@@ -8,9 +9,12 @@ import dash_loading_spinners as dls
 from dash.dependencies import Input, Output, State
 from dash_bootstrap_templates import ThemeSwitchAIO, ThemeChangerAIO, template_from_url
 from dash.exceptions import PreventUpdate
-
 from .side_bar import sidebar
-from utils import fetch_data, add_indicators, plot_subplots, apply_directional_filter
+from utils import fetch_data, add_indicators, plot_subplots, apply_directional_filter, Strategy
+import quantstats_lumi as qs
+
+# Initialize QuantStats
+qs.extend_pandas()
 
 dash.register_page(__name__, name='FILTERS BACKTEST')
 
@@ -21,7 +25,7 @@ dash.register_page(__name__, name='FILTERS BACKTEST')
 # Inputs parameters
 ##=========================================================================================================
 TIMEFRAMES = ['1d']
-SYMBOLS = ['EURUSD', 'GBPUSD']
+SYMBOLS = ['EURUSD', 'GBPUSD', 'AUDJPY', 'USDCHF', 'NZDUSD', 'USDCAD', 'EURGBP', 'EURJPY', 'GBPJPY']
 FILTERS = ['HYBRID', 'FILTERS2']
 
 symbol_dropdown = html.Div([
@@ -59,6 +63,8 @@ run_button = html.Div(
     ]
 )
 
+# File path
+file_path = "/assets/StrategyBacktest.html"
 ##=========================================================================================================
 
 
@@ -89,7 +95,7 @@ def layout():
                             ''', style={'textAlign': 'left'}),
 
                     html.P('Instruction to run the backtest'
-                           '** Click the Run Backtest button to start. **'
+                           '** Click the Run Backtest button to start.**'
                            , style={'textAlign': 'left'}),
                     html.Hr(),
 
@@ -123,7 +129,16 @@ def layout():
                                 # div for signal plot
                                 html.Div(id='signal-plot'),
                                 color="#0f62fe",  # Customize color of the spinner
-                            )
+                            ),
+
+                            html.Br(),
+                            html.Hr(),
+                            html.Div(id='download-report'),
+                            html.Div(id='returns-plot'),
+
+                            html.Div([
+                                html.Div(id="download-link-container"),
+                            ])
                         ]),
 
                     ])
@@ -137,99 +152,93 @@ def layout():
 
 
 @callback(
-Output("signal-plot", "children"),
+    Output("signal-plot", "children"),
+    Output("download-report", "children"),
+    Output("returns-plot", "children"),
     Input('symbol-dropdown', 'value'),
     Input('timeframe-dropdown', 'value'),
     Input('filters-dropdown', 'value'),
     Input('run-button', 'n_clicks'),
     prevent_initial_call=True)
-
 def plot_signals(ticker, timeframe, filter, n_clicks):
     if "run-button" == ctx.triggered_id:
 
         price_daily, vix_daily, usdx_daily, macro_data, sp_daily = fetch_data(ticker)
+        print(f'price_daily shape; {price_daily.shape}')
+
         data = add_indicators(price_daily)
+        print(f'price_daily shape; {price_daily.shape}')
 
         data_filters = apply_directional_filter(price_daily, vix_daily, usdx_daily, macro_data, sp_daily)
 
-        if filter == 'HYBRID':
-            chart = plot_subplots(data_filters, 'Hybrid_Signal', ticker)
+        filters_dict = {
+            'HYBRID': 'Hybrid_Signal',
+            'FILTERS1': 'Signal_1',
+            'FILTERS2': 'Signal_2',
+            'FILTERS3': 'Signal_3',
+        }
 
-        elif filter == 'FILTERS2':
-            chart = plot_subplots(data_filters, 'Signal_2', ticker)
+        # Run the strategy using EUR/USD data
+        strategy = Strategy(data_filters, filters_dict[filter])
+        result = strategy.run()
 
-        return dcc.Graph(figure=chart)
+        # Convert index to datetime
+        result = result.set_index('open_datetime')
+        result.index = pd.to_datetime(result.index)
+
+        # generate report tearsheet with SPY BENCHMARK
+        qs.reports.html(result['cumulative_returns'], title=f'{ticker} Strategy backtest',
+                        download_filename=f'{ticker}_StrategyBacktest.html', output=f'assets/StrategyBacktest.html')
+
+        chart = plot_subplots(data_filters, filters_dict[filter], ticker)
+        # button = html.Button("Download Backtest Report", id="btn-dwnld")
+        button = html.Button("Generate Report", id="btn-generate")
+
+        return [dcc.Graph(figure=chart), button, None]
 
     else:
         raise PreventUpdate
-#
-#
-# @callback(
-#     Output("chart-content", "children"),
-#     # Output('price-plot-div', 'src'),
-#     Input("tabs", "active_tab"),
-#     Input('train_store', 'data'),
-#     Input('test_store', 'data'),
-#     Input('symbol-dropdown', 'value'),
-#     Input('timeframe-dropdown', 'value'),
-#     Input('split', 'value'),
-#     Input('diff-checkbox', 'value'),
-#     Input('log-checkbox', 'value'),
-#     Input('run-button', 'n_clicks'),
-#     prevent_initial_call=True
-#
-# )
-# def Run_model(tab, train_data, test_data, symbol, timeframe, split, diff, log, n_clicks):  # ,
-#
-#     # if "run-button" == ctx.triggered_id:
-#     train_data = pd.DataFrame(train_data)
-#     test_data = pd.DataFrame(test_data)
-#     best, model, summary = model_selection(train_data)
-#
-#     split = int(split)
-#
-#     # if "run-button" == ctx.triggered_id:
-#
-#     if tab == "chart":
-#
-#         tr_data, te_data, price_chart = chart_data(symbol, timeframe, split=int(split), diff=diff, log=log)
-#
-#         return html.Div([html.Img(id='price_plot', src=price_chart)],
-#                         id='price-plot-div')  # , price_chart
-#
-#     elif tab == "acf_pacf":
-#
-#         acf_pacf = acf_pcf(train_data)
-#         return html.Div([html.Img(id='acf_pacf', src=acf_pacf)],
-#                         id='acf_pacf-div')  # , price_chart
-#
-#     elif tab == "model-selection":
-#
-#         # model, summary = model_selection(train_data)
-#
-#         return html.Div(
-#             [
-#                 html.P(f'Best Model : ARIMA {best}'),
-#                 html.P(children=str(summary), style={'whiteSpace': 'pre-wrap'})
-#
-#             ], id='model_selection-div')  # , price_chart
-#
-#     elif tab == "model-diagnostics":
-#
-#         dig = diagnostics(model)
-#         return html.Div([html.Img(id='giagnostics', src=dig)],
-#                         id='dig-div')  # , price_chart
-#
-#     elif tab == "model-forecast":
-#         if log:
-#
-#             fore = forecast_log(model, train_data, test_data, symbol, timeframe, split=split, alpha1=0.20, alpha2=0.05)
-#             return html.Div([html.Img(id='forecast', src=fore)],
-#                             id='forecast-div')  # , price_chart
-#         else:
-#             fore = forecast(model, train_data, test_data, symbol, timeframe, split=split, alpha1=0.20, alpha2=0.05)
-#             return html.Div([html.Img(id='forecast', src=fore)],
-#                             id='forecast-div')  # , price_chart
-#
-#     # else:
-#     # raise PreventUpdate
+
+
+@callback(
+    Output("download-link-container", "children"),
+    Input("btn-generate", "n_clicks"),
+    Input('timeframe-dropdown', 'value'),
+    prevent_initial_call=True,
+)
+def generate_report(n_clicks, ticker):
+    if n_clicks:
+        print("Report generated!")  # Replace with actual report generation code if needed
+
+        # Create a link to download the file
+        download_link = html.A(
+            "Click here to download the report",
+            href=file_path,
+            download=f"{ticker}_StrategyBacktest.html",  # This attribute prompts download on click
+            target="_blank"  # Opens in a new tab if needed
+        )
+        return download_link
+
+    return "Click the button to generate the report."
+
+@callback(
+    Output("download-report", "data"),
+    Input("btn-dwnld", "n_clicks"),
+    prevent_initial_call=True,
+)
+def func(n_clicks):
+    # Set an absolute path
+    file_path = os.path.abspath("./dash-community-components.png")
+    print(file_path)
+
+    if n_clicks:
+        print('Download button clicked!')
+
+        # Verify file exists
+        if os.path.exists(file_path):
+            print('File path exists')
+            return dcc.send_file('./dash-community-components.png')
+        else:
+            raise Exception(f"File not found: {file_path}")
+
+    raise PreventUpdate

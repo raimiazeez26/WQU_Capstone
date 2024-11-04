@@ -50,4 +50,4 @@ app.layout = dbc.Container([header, dash.page_container],
                            className="border p-4")
 
 if __name__ == '__main__':
-	app.run_server(port=2020)
+    app.run_server(port=2020)

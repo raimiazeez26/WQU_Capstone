@@ -221,24 +221,24 @@ def generate_report(n_clicks, ticker):
 
     return "Click the button to generate the report."
 
-@callback(
-    Output("download-report", "data"),
-    Input("btn-dwnld", "n_clicks"),
-    prevent_initial_call=True,
-)
-def func(n_clicks):
-    # Set an absolute path
-    file_path = os.path.abspath("./dash-community-components.png")
-    print(file_path)
-
-    if n_clicks:
-        print('Download button clicked!')
-
-        # Verify file exists
-        if os.path.exists(file_path):
-            print('File path exists')
-            return dcc.send_file('./dash-community-components.png')
-        else:
-            raise Exception(f"File not found: {file_path}")
-
-    raise PreventUpdate
+# @callback(
+#     Output("download-report", "data"),
+#     Input("btn-dwnld", "n_clicks"),
+#     prevent_initial_call=True,
+# )
+# def func(n_clicks):
+#     # Set an absolute path
+#     file_path = os.path.abspath("./dash-community-components.png")
+#     print(file_path)
+#
+#     if n_clicks:
+#         print('Download button clicked!')
+#
+#         # Verify file exists
+#         if os.path.exists(file_path):
+#             print('File path exists')
+#             return dcc.send_file('./dash-community-components.png')
+#         else:
+#             raise Exception(f"File not found: {file_path}")
+#
+#     raise PreventUpdate

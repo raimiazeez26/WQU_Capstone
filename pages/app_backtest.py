@@ -188,7 +188,8 @@ def plot_signals(ticker, timeframe, filter, n_clicks):
 
         # generate report tearsheet with SPY BENCHMARK
         qs.reports.html(result['cumulative_returns'], title=f'{ticker} Strategy backtest',
-                        download_filename=f'{ticker}_StrategyBacktest.html', output=f'assets/StrategyBacktest.html')
+                        download_filename=f'{ticker}_StrategyBacktest.html',
+                        output=f'assets/{ticker}_StrategyBacktest.html')
 
         chart = plot_subplots(data_filters, filters_dict[filter], ticker)
         # button = html.Button("Download Backtest Report", id="btn-dwnld")

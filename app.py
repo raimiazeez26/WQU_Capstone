@@ -17,14 +17,6 @@ app = Dash(__name__, use_pages=True, external_stylesheets=[dbc.themes.SLATE, fon
 theme_switch = ThemeSwitchAIO(aio_id="theme", themes=[dbc.themes.SLATE, dbc.themes.SUPERHERO]) #CYBORG
 
 server = app.server
-# auth = dash_auth.BasicAuth(
-#     app,
-#     {
-#         'raimiazeez': 'mypassword',
-#         'myprojects': 'myprojects'
-#
-#     }
-# )
 
 header = dbc.Navbar(
     dbc.Container(

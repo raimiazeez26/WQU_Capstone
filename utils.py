@@ -21,28 +21,28 @@ import quantstats_lumi as qs
 qs.extend_pandas()
 
 
-def fetch_data(ticker):
+def fetch_data(ticker, tf):
     # Data Collection from yfinance
     # EUR/USD Data
-    eurusd_daily = yf.download(f'{ticker}=X', period='10y', interval='1d')
+    eurusd_daily = yf.download(f'{ticker}=X', period='10y', interval=tf)
     eurusd_daily = eurusd_daily.droplevel(level=1, axis=1)
 
     # VIX (Volatility Index)
-    vix_daily = yf.download('^VIX', period='10y', interval='1d')
+    vix_daily = yf.download('^VIX', period='10y', interval=tf)
     # USDX (US Dollar Index)
-    usdx_daily = yf.download('DX-Y.NYB', period='10y', interval='1d')
+    usdx_daily = yf.download('DX-Y.NYB', period='10y', interval=tf)
     # SP500 data
-    sp_daily = yf.download('^GSPC', period='10y', interval='1d')
+    sp_daily = yf.download('^GSPC', period='10y', interval=tf)
 
     # Macroeconomic Proxies from yfinance
     # Non-Farm Payroll proxy (XLI - Industrials ETF)
-    xli = yf.download('XLI', period='10y', interval='1d')
+    xli = yf.download('XLI', period='10y', interval=tf)
     # CPI proxy (TIP - iShares TIPS Bond ETF)
-    tip = yf.download('TIP', period='10y', interval='1d')
+    tip = yf.download('TIP', period='10y', interval=tf)
     # Treasury Yield proxy (TLT - iShares 20+ Year Treasury Bond ETF)
-    tlt = yf.download('TLT', period='10y', interval='1d')
+    tlt = yf.download('TLT', period='10y', interval=tf)
     # Interest Rate proxy (SHY - iShares 1-3 Year Treasury Bond ETF)
-    shy = yf.download('SHY', period='10y', interval='1d')
+    shy = yf.download('SHY', period='10y', interval=tf)
 
     # Merge macroeconomic data into one DataFrame
     macro_data = pd.DataFrame()

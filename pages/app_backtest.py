@@ -26,7 +26,7 @@ dash.register_page(__name__, name='FILTERS BACKTEST')
 ##=========================================================================================================
 TIMEFRAMES = ['1d']
 SYMBOLS = ['EURUSD', 'GBPUSD', 'AUDJPY', 'USDCHF', 'NZDUSD', 'USDCAD', 'EURGBP', 'EURJPY', 'GBPJPY']
-FILTERS = ['HYBRID', 'FILTERS2']
+FILTERS = ['HYBRID', 'FILTERS1', 'FILTERS2', 'FILTERS3']
 
 symbol_dropdown = html.Div([
     html.P('Symbol:'),
@@ -163,7 +163,7 @@ def layout():
 def plot_signals(ticker, timeframe, filter, n_clicks):
     if "run-button" == ctx.triggered_id:
 
-        price_daily, vix_daily, usdx_daily, macro_data, sp_daily = fetch_data(ticker)
+        price_daily, vix_daily, usdx_daily, macro_data, sp_daily = fetch_data(ticker, timeframe)
         print(f'price_daily shape; {price_daily.shape}')
 
         data = add_indicators(price_daily)
@@ -193,7 +193,7 @@ def plot_signals(ticker, timeframe, filter, n_clicks):
 
         chart = plot_subplots(data_filters, filters_dict[filter], ticker)
         # button = html.Button("Download Backtest Report", id="btn-dwnld")
-        button = html.Button("Generate Report", id="btn-generate")
+        button = html.Button("Generate Backtest Report", id="btn-generate")
 
         return [dcc.Graph(figure=chart), button, None]
 
@@ -204,7 +204,7 @@ def plot_signals(ticker, timeframe, filter, n_clicks):
 @callback(
     Output("download-link-container", "children"),
     Input("btn-generate", "n_clicks"),
-    Input('timeframe-dropdown', 'value'),
+    Input('symbol-dropdown', 'value'),
     prevent_initial_call=True,
 )
 def generate_report(n_clicks, ticker):

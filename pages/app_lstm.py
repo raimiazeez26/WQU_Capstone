@@ -1,18 +1,18 @@
-
+import warnings
 import os
 import dash
-from dash import Dash, html, dcc, ctx, callback
+from dash import html, dcc, ctx, callback
 import dash_bootstrap_components as dbc
 import dash_loading_spinners as dls
 from dash.dependencies import Input, Output, State
-from dash_bootstrap_templates import ThemeSwitchAIO, ThemeChangerAIO, template_from_url
-from dash.exceptions import PreventUpdate
 import dash_ag_grid as dag
 from pages.side_bar import sidebar
-from utils import fetch_data, add_indicators, plot_subplots, apply_directional_filter
 from pages.lstm import run_lstm
 import redis
 from rq import Queue
+
+# Suppress warnings
+warnings.filterwarnings("ignore")
 
 dash.register_page(__name__, name='PREDICTION MODEL')
 
@@ -207,6 +207,6 @@ def train_predict(n_intervals, ticker, job_id):
         elif job.is_failed:
             return 'Model Training failed', None, None, None, True  # None, None,
         else:
-            return 'Training Model. This might take a few minutes, please wait...', None, None, None, False  # None, None,
+            return 'Training Model. This might take a few minutes, please wait...', None, None, None, False
 
     return [None, None, None, None, False]

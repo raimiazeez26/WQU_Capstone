@@ -6,7 +6,6 @@ from ta.trend import EMAIndicator, ADXIndicator, MACD
 from ta.momentum import RSIIndicator
 from ta.volatility import BollingerBands
 
-import plotly
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 

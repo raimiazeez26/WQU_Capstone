@@ -113,7 +113,7 @@ def layout():
                             type="circle",
                         ),
 
-                        dcc.Interval(id='interval-component', interval=5 * 1000, n_intervals=0, disabled=True),
+                        dcc.Interval(id='interval-component', interval=2 * 1000, n_intervals=0, disabled=True),
 
                     ]),
                 ])

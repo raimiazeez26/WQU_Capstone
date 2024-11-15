@@ -36,7 +36,9 @@ class WindowsWorker(SimpleWorker):
 listen = ['default']
 
 redis_url = urlparse(os.getenv("REDISCLOUD_URL"))
-conn = redis.Redis(host=redis_url.hostname, port=redis_url.port, password=redis_url.password, ssl=True, ssl_cert_reqs=None) #redis.from_url(redis_url)
+conn = redis.Redis(host=redis_url.hostname,
+                   port=redis_url.port,
+                   password=redis_url.password, ssl=False) #redis.from_url(redis_url) #ssl_cert_reqs=None
 
 if __name__ == '__main__':
     with Connection(conn):

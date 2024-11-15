@@ -353,7 +353,7 @@ class Strategy:
     # return backtest result
     def get_positions_df(self):
         df = pd.DataFrame([position._asdict() for position in self.positions])
-        print(df['returns'])
+        # print(df['returns'])
         df["cumulative_returns"] = (1 + (df['returns']).cumprod())
         return df
 

@@ -1,6 +1,5 @@
-import datetime, time
-import pandas as pd
-import numpy as np
+
+import os
 import dash
 from dash import Dash, html, dcc, ctx, callback
 import dash_bootstrap_components as dbc
@@ -11,10 +10,15 @@ from dash.exceptions import PreventUpdate
 import dash_ag_grid as dag
 from pages.side_bar import sidebar
 from utils import fetch_data, add_indicators, plot_subplots, apply_directional_filter
-# from pages.app_backtest import symbol_dropdown, timeframe_dropdown, filters_dropdown, run_button
 from pages.lstm import run_lstm
+import redis
+from rq import Queue
 
 dash.register_page(__name__, name='PREDICTION MODEL')
+
+redis_url = os.getenv('REDISCLOUD_URL', 'redis://localhost:6379')
+conn = redis.from_url(redis_url)
+q = Queue(connection=conn)
 
 ##=========================================================================================================
 # Inputs parameters
@@ -41,14 +45,6 @@ timeframe_dropdown = html.Div([
     )
 ])
 
-filters_dropdown = html.Div([
-    html.P('Filters:'),
-    dcc.Dropdown(
-        id='filters-dropdown-lstm',
-        options=[{'label': filter, 'value': filter} for filter in FILTERS],
-        value='HYBRID',
-    )
-])
 
 run_button = html.Div(
     [
@@ -85,7 +81,8 @@ def layout():
                         ], xs=2, sm=2, md=2, lg=2, xl=2, className='p-3'),
 
                         dbc.Col([
-                            filters_dropdown,
+                            html.P('No of Epochs:'),
+                            dbc.Input(id='no-epochs', type='number', min=1, max=100, value=10),
                         ], xs=2, sm=2, md=2, lg=2, xl=2, className='p-3'),
 
                         dbc.Col([
@@ -105,18 +102,18 @@ def layout():
                             color="#0f62fe",  # Customize color of the spinner
                         ),
 
-                        html.Br(),
-                        html.Hr(),
                         html.Div(id='transactions-result'),
-
-                        html.Br(),
-                        html.Hr(),
                         html.Div(id='training-result2'),
-
-                        html.Br(),
-                        html.Hr(),
-
                         html.Div(id='transactions-result2'),
+                        dcc.Loading(
+                            id="result-loading",
+                            children=[
+                                html.Div(id='job-id', style={'display': 'none'}),
+                            ],
+                            type="circle",
+                        ),
+
+                        dcc.Interval(id='interval-component', interval=5 * 1000, n_intervals=0, disabled=True),
 
                     ]),
                 ])
@@ -127,54 +124,89 @@ def layout():
 
 
 @callback(
+    Output('job-id', 'children'),
+    Output('interval-component', 'disabled', allow_duplicate=True),
+    Input("run-button-lstm", "n_clicks"),
+    Input('symbol-dropdown-lstm', 'value'),
+    Input('timeframe-dropdown-lstm', 'value'),
+    Input('no-epochs', 'value'),
+
+
+prevent_initial_call=True
+)
+def run_model(n_click, ticker, timeframe, no_epochs):
+    if "run-button-lstm" == ctx.triggered_id:
+        print('Button Clicked')
+        # figs, transactions = run_lstm(ticker, timeframe)
+
+        job = q.enqueue(run_lstm, ticker, timeframe, no_epochs)
+        # job = q.enqueue(test_job)
+        print(f"Job ID: {job.id}")
+
+
+        # print(f'Job Created with ID: {job.id}')
+        return job.id, False
+    return None, True
+
+
+@callback(
     Output("training-result", "children"),
     Output("transactions-result", "children"),
     Output("training-result2", "children"),
     Output("transactions-result2", "children"),
-    Input("run-button-lstm", "n_clicks"),
+    Output('interval-component', 'disabled'),
+    Input('interval-component', 'n_intervals'),
     Input('symbol-dropdown-lstm', 'value'),
-    Input('timeframe-dropdown-lstm', 'value'),
+    State('job-id', 'children'),
 
     prevent_initial_call=True,
 )
-def train_predict(n_click, ticker, timeframe):
-    if "run-button-lstm" == ctx.triggered_id:
-        print('Button Clicked')
-        figs, transactions = run_lstm(ticker, timeframe)
+def train_predict(n_intervals, ticker, job_id):
+    if job_id:
+        job = q.fetch_job(job_id)
+        if job.is_finished:
+            figs, transactions = job.return_value()
 
-        transaction_table1 = [
-            html.H4(f"Transactions for {ticker}: Hybrid: True", className="text-center mb-4"),
-            dag.AgGrid(
-                className="ag-theme-alpine-dark header-style-on-filter",
-                id="data-grid",
-                columnSize="autoSize",
-                columnDefs=[{"field": i, "resizable": True} for i in transactions[0].columns],
-                rowData=transactions[0].to_dict("records"),
-                defaultColDef={
-                    "filter": "agTextColumnFilter",
-                    "cellStyle": {"textAlign": "center"}
-                },
-                dashGridOptions={"animateRows": True},
-            )
-        ]
+            transaction_table1 = [
+                html.H4(f"Transactions for {ticker}: Hybrid: True", className="text-center mb-4"),
+                dag.AgGrid(
+                    className="ag-theme-alpine-dark header-style-on-filter",
+                    id="data-grid",
+                    columnSize="autoSize",
+                    columnDefs=[{"field": i, "resizable": True} for i in transactions[0].columns],
+                    rowData=transactions[0].to_dict("records"),
+                    defaultColDef={
+                        "filter": "agTextColumnFilter",
+                        "cellStyle": {"textAlign": "center"}
+                    },
+                    dashGridOptions={"animateRows": True},
+                )
+            ]
 
-        transaction_table2 = [
-            html.H4(f"Transactions for {ticker}: Hybrid: True", className="text-center mb-4"),
-            dag.AgGrid(
-                className="ag-theme-alpine-dark header-style-on-filter",
-                id="data-grid2",
-                columnSize="autoSize",
-                columnDefs=[{"field": i, "resizable": True} for i in transactions[1].columns],
-                rowData=transactions[1].to_dict("records"),
-                defaultColDef={
-                    "filter": "agTextColumnFilter",
-                    "cellStyle": {"textAlign": "center"}
-                },
-                dashGridOptions={"animateRows": True},
+            transaction_table2 = [
+                html.H4(f"Transactions for {ticker}: Hybrid: True", className="text-center mb-4"),
+                dag.AgGrid(
+                    className="ag-theme-alpine-dark header-style-on-filter",
+                    id="data-grid2",
+                    columnSize="autoSize",
+                    columnDefs=[{"field": i, "resizable": True} for i in transactions[1].columns],
+                    rowData=transactions[1].to_dict("records"),
+                    defaultColDef={
+                        "filter": "agTextColumnFilter",
+                        "cellStyle": {"textAlign": "center"}
+                    },
+                    dashGridOptions={"animateRows": True},
 
-            )
-        ]
+                )
+            ]
+            return [[html.Br(), html.Hr(), dcc.Graph(figure=figs[0])],
+                    [html.Br(), html.Hr(), transaction_table1],
+                    [html.Br(), html.Hr(), dcc.Graph(figure=figs[1])],
+                    [html.Br(), html.Hr(), transaction_table2], True]
 
-        return [dcc.Graph(figure=figs[0]), transaction_table1, dcc.Graph(figure=figs[1]), transaction_table2]
+        elif job.is_failed:
+            return 'Model Training failed', None, None, None, True  # None, None,
+        else:
+            return 'Training Model. This might take a few minutes, please wait...', None, None, None, False  # None, None,
 
-    return [None, None, None]
+    return [None, None, None, None, False]

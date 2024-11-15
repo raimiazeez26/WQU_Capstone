@@ -18,9 +18,6 @@ qs.extend_pandas()
 
 dash.register_page(__name__, name='FILTERS BACKTEST')
 
-# creates the Dash App
-# app = Dash(__name__, external_stylesheets=[dbc.themes.MORPH])
-
 ##=========================================================================================================
 # Inputs parameters
 ##=========================================================================================================

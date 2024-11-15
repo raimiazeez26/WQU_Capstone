@@ -629,7 +629,7 @@ def create_transaction_table(actual, predicted, threshold=0.01):
     return transactions_df
 
 
-def run_lstm(ticker, timeframe):
+def run_lstm(ticker, timeframe, no_epochs):
     use_hybrid = [True, False]
     threshold = 0.01
     figures = []
@@ -649,7 +649,7 @@ def run_lstm(ticker, timeframe):
         data_filters = apply_directional_filter(price_daily, vix_daily, usdx_daily, macro_data, sp_daily)
 
         model, scaler, x_train, y_train, x_val, y_val, x_test, y_test = train_lstm(
-        ticker, data_filters, time_step=10, test_size=0.2, val_size=0.1, epochs=50, batch_size=32,  use_hybrid=hybrid
+        ticker, data_filters, time_step=10, test_size=0.2, val_size=0.1, epochs=no_epochs, batch_size=32,  use_hybrid=hybrid
         )
 
         # Predictions for training, validation, and test sets
@@ -716,3 +716,4 @@ def run_lstm(ticker, timeframe):
         transactions.append(transactions_df)
 
     return figures, transactions
+

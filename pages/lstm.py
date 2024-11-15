@@ -491,7 +491,7 @@ def train_lstm(ticker, data, time_step=10, test_size=0.2, val_size=0.1, epochs=5
     )
     model, history = build_lstm_model(x_train, y_train, x_val, y_val, epochs)
 
-    plot_training_history(history, ticker, use_hybrid)
+    # plot_training_history(history, ticker, use_hybrid)
     model.fit(x_train, y_train, epochs=epochs, batch_size=batch_size, validation_data=(x_val, y_val), verbose=0)
 
     return model, scaler, x_train, y_train, x_val, y_val, x_test, y_test

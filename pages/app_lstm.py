@@ -207,6 +207,6 @@ def train_predict(n_intervals, ticker, job_id):
         elif job.is_failed:
             return 'Model Training failed', None, None, None, True  # None, None,
         else:
-            return 'Training Model. This might take a few minutes, please wait...', None, None, None, False
+            return 'Training Model... This might take a few minutes, please wait...', None, None, None, False
 
     return [None, None, None, None, False]

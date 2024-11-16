@@ -5,6 +5,7 @@ from dash import html, dcc, ctx, callback
 import dash_bootstrap_components as dbc
 import dash_loading_spinners as dls
 from dash.dependencies import Input, Output, State
+from dash.exceptions import PreventUpdate
 import dash_ag_grid as dag
 from pages.side_bar import sidebar
 from pages.lstm import run_lstm
@@ -130,9 +131,7 @@ def layout():
     Input('symbol-dropdown-lstm', 'value'),
     Input('timeframe-dropdown-lstm', 'value'),
     Input('no-epochs', 'value'),
-
-
-prevent_initial_call=True
+    prevent_initial_call=True
 )
 def run_model(n_click, ticker, timeframe, no_epochs):
     if "run-button-lstm" == ctx.triggered_id:
@@ -143,10 +142,11 @@ def run_model(n_click, ticker, timeframe, no_epochs):
         # job = q.enqueue(test_job)
         print(f"Job ID: {job.id}")
 
-
         # print(f'Job Created with ID: {job.id}')
         return job.id, False
-    return None, True
+    else:
+        # return None, True
+        raise PreventUpdate
 
 
 @callback(
@@ -158,7 +158,6 @@ def run_model(n_click, ticker, timeframe, no_epochs):
     Input('interval-component', 'n_intervals'),
     Input('symbol-dropdown-lstm', 'value'),
     State('job-id', 'children'),
-
     prevent_initial_call=True,
 )
 def train_predict(n_intervals, ticker, job_id):
@@ -209,4 +208,5 @@ def train_predict(n_intervals, ticker, job_id):
         else:
             return 'Training Model... This might take a few minutes, please wait...', None, None, None, False
 
-    return [None, None, None, None, False]
+    raise PreventUpdate
+    # return [None, None, None, None, False]

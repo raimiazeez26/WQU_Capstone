@@ -14,7 +14,7 @@ app = Dash(__name__, use_pages=True, external_stylesheets=[dbc.themes.SLATE, fon
            )
 
 # #theme switch
-theme_switch = ThemeSwitchAIO(aio_id="theme", themes=[dbc.themes.SLATE, dbc.themes.SUPERHERO]) #CYBORG
+theme_switch = ThemeSwitchAIO(aio_id="theme", themes=[dbc.themes.SUPERHERO, dbc.themes.SLATE]) #CYBORG
 
 server = app.server
 

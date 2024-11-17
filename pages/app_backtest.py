@@ -78,18 +78,23 @@ def layout():
                     html.Hr(),
 
                     html.P(
-                        'Add description here.. '
+                        "Back testing Mean Reversion Strategy with various Filters and the proposed Hybrid Filter. "
+                        "A mean reversion strategy was implemented, based on price deviations from Bollinger Bands "
+                        "that determined whether a position was to be entered or not. Back testing was performed on "
+                        "the strategy with the filters and hybrid filter generated in the previous step. "
+                        "Metrics such as total cumulative returns were computed to allow for comparison of the final "
+                        "results for the various signal generation techniques."
                         , style={'textAlign': 'left'}),
 
-                    dcc.Markdown('''
-                            * More information on Filters...
-                            * More information on Filters...
-                            * More information on Filters...
-                            ''', style={'textAlign': 'left'}),
+                    # dcc.Markdown('''
+                    #         * More information on Filters...
+                    #         * More information on Filters...
+                    #         * More information on Filters...
+                    #         ''', style={'textAlign': 'left'}),
 
-                    html.P('Instruction to run the backtest'
-                           '** Click the Run Backtest button to start.**'
-                           , style={'textAlign': 'left'}),
+                    # html.P('Instruction to run the backtest'
+                    #        '** Click the Run Backtest button to start.**'
+                    #        , style={'textAlign': 'left'}),
                     html.Hr(),
 
                     dbc.Container([

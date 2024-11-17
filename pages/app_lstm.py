@@ -66,9 +66,20 @@ def layout():
             ),
 
             dbc.Col([
+                html.H3('LSTM MODEL PREDICTION', style={'textAlign': 'center'},
+                        className='p4'),
+                html.Br(),
+                html.Hr(),
                 html.P(
-                    'Still in development...  Be patient!'
+                    'LSTM Predictive Model. The development of a LSTM model trained on the various FOREX currency '
+                    'pair data and the enriched dataset to predict price movement of the FOREX data was explored. '
+                    'The data for each pair was split in training, validation and test in the ratio of 0.7, 0.1 and 0.2'
+                    'respectively, with MinMax scaling. A total of 50 epochs was instituted for the training. '
+                    'Back testing and mean error squared (MSE), mean absolute error (MAE) and root mean squared error '
+                    '(RMSE) were performed to evaluate the predictive performance of the model with the actual data.'
                     , style={'textAlign': 'left'}),
+                html.Br(),
+                html.Hr(),
 
                 dbc.Container([
 

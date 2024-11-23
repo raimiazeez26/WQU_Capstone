@@ -56,8 +56,6 @@ run_button = html.Div(
     ]
 )
 
-# File path
-file_path = "/assets/StrategyBacktest.html"
 ##=========================================================================================================
 
 
@@ -212,7 +210,7 @@ def generate_report(n_clicks, ticker):
         # Create a link to download the file
         download_link = html.A(
             "Click here to download the report",
-            href=file_path,
+            href = f"assets/{ticker}_StrategyBacktest.html",
             download=f"{ticker}_StrategyBacktest.html",  # This attribute prompts download on click
             target="_blank"  # Opens in a new tab if needed
         )
